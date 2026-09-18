@@ -1,42 +1,57 @@
 
+#include "ray.h"
 #include "vec3.h"
+#include <algorithm>
 #include <iostream>
 
+constexpr double aspect_ratio = 16.0 / 9.0;
 constexpr int image_width = 256;
-constexpr int image_height = 256;
+constexpr int image_height =
+    std::max(1, static_cast<int>(image_width / aspect_ratio));
 
-void output() {
-  std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
-  for (int i = 0; i < image_height; ++i) {
-    for (int j = 0; j < image_width; ++j) {
-      std::cout << j << " " << 0 << " " << i << "   ";
-    }
-    std::cout << '\n';
-  }
-  // std::cout << "P3\n"
-  //           << "3 2\n"
-  //           << "255\n"
-  //           << "255 0 0   0 255 0   0 0 255\n"
-  //           << "255 255 0   255 255 255   0 0 0\n";
+std::ostream &write_color(std::ostream &out, const color &c) {
+  out << static_cast<int>(c.x() * 255.999) << " "
+      << static_cast<int>(c.y() * 255.999) << " "
+      << static_cast<int>(c.z() * 255.999);
+  return out;
+}
+
+color ray_color(const ray &r) {
+  vec3 normalize = unit_vector(r.direction());
+  double remap{(normalize.y() + 1) / 2};
+  const color start{1.0, 1.0, 1.0};
+  const color end{0.5, 0.7, 1.0};
+  color result{(1 - remap) * start + remap * end};
+  return result;
 }
 
 int main() {
-  vec3 v1(1, 2, 3);
-  vec3 v2(4, 5, 6);
+  const point3 camera_center{0, 0, 0};
+  const double focal_length{1.0};
+  const double viewport_height{2.0};
+  const double viewport_width{
+      viewport_height * (static_cast<double>(image_width) / image_height)};
 
-  std::cout << v1 << '\n' << v2 << '\n';
-  std::cout << v1 + v2 << '\n';
-  std::cout << v2 - v1 << '\n';
-  std::cout << dot(v1, v2) << '\n';
-  std::cout << cross(v1, v2) << '\n';
+  const vec3 viewport_u{viewport_width, 0, 0};
+  const vec3 viewport_v{0, -viewport_height, 0};
 
-  std::cout << v1 / 2 << '\n';
-  std::cout << 3 * v2 << '\n';
+  const vec3 pixel_delta_u{viewport_u / image_width};
+  const vec3 pixel_delta_v{viewport_v / image_height};
 
-  std::cout << v2.length() << '\n';
-  v2 += v1;
+  const vec3 viewport_upper_left{camera_center - vec3(0, 0, focal_length) -
+                                 viewport_u / 2 - viewport_v / 2};
+  const point3 pixel00_loc{viewport_upper_left +
+                           0.5 * (pixel_delta_u + pixel_delta_v)};
 
-  std::cout << v2 << '\n';
-  std::cout << v2.length() << '\n';
-  std::cout << unit_vector(v2) << '\n';
+  std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
+  for (int i = 0; i < image_height; ++i) {
+    for (int j = 0; j < image_width; ++j) {
+      point3 pixel_center = pixel00_loc + j * pixel_delta_u + i * pixel_delta_v;
+      vec3 ray_direction = pixel_center - camera_center;
+      write_color(std::cout, ray_color(ray(camera_center, ray_direction)));
+      std::cout << "   ";
+    }
+    std::cerr << image_height - i << " rows left\n";
+    std::cout << '\n';
+  }
 }

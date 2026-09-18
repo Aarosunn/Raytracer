@@ -54,10 +54,6 @@ inline vec3 operator*(double t, const vec3 &v) {
 
 inline vec3 operator*(const vec3 &v, double t) { return t * v; }
 
-inline vec3 operator/(const vec3 &v1, const vec3 &v2) {
-  return vec3(v1.x() / v2.x(), v1.y() / v2.y(), v1.z() / v2.z());
-}
-
 inline vec3 operator/(const vec3 &v, double t) { return (1.0 / t) * v; }
 
 inline double dot(const vec3 &v1, const vec3 &v2) {

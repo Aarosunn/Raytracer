@@ -3,3 +3,4 @@ rt
 *.o
 images/*.ppm
 build/
+*.d
