@@ -5,7 +5,7 @@
 #include <iostream>
 
 constexpr double aspect_ratio = 16.0 / 9.0;
-constexpr int image_width = 256;
+constexpr int image_width = 900;
 constexpr int image_height =
     std::max(1, static_cast<int>(image_width / aspect_ratio));
 
@@ -23,6 +23,14 @@ color ray_color(const ray &r) {
   const color end{0.5, 0.7, 1.0};
   color result{(1 - remap) * start + remap * end};
   return result;
+}
+
+bool hit_sphere(const point3 &center, double radius, const ray &r) {
+  vec3 oc{r.origin() - center};
+  double a{dot(r.direction(), r.direction())};
+  double b{2 * dot(r.direction(), oc)};
+  double c{dot(oc, oc) - radius * radius};
+  return b * b - 4 * a * c >= 0;
 }
 
 int main() {
@@ -46,9 +54,15 @@ int main() {
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {
+
       point3 pixel_center = pixel00_loc + j * pixel_delta_u + i * pixel_delta_v;
       vec3 ray_direction = pixel_center - camera_center;
-      write_color(std::cout, ray_color(ray(camera_center, ray_direction)));
+
+      ray r(camera_center, ray_direction);
+      if (hit_sphere(point3(0, 0, -1), 0.5, r))
+        write_color(std::cout, color(1.0, 0, 0));
+      else
+        write_color(std::cout, ray_color(r));
       std::cout << "   ";
     }
     std::cerr << image_height - i << " rows left\n";
