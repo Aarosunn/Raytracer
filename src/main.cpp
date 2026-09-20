@@ -3,6 +3,7 @@
 #include "vec3.h"
 #include <algorithm>
 #include <iostream>
+#include <optional>
 
 constexpr double aspect_ratio = 16.0 / 9.0;
 constexpr int image_width = 900;
@@ -25,12 +26,29 @@ color ray_color(const ray &r) {
   return result;
 }
 
-bool hit_sphere(const point3 &center, double radius, const ray &r) {
+std::optional<double> solve_quadratic(double a, double h, double disc) {
+  double discroot = std::sqrt(disc);
+  double t1{(-h + discroot) / a};
+  double t2{(-h - discroot) / a};
+  if (t2 >= 0)
+    return t2;
+  if (t1 < 0)
+    return std::nullopt;
+  else
+    return t1;
+}
+
+std::optional<double> hit_sphere(const point3 &center, double radius,
+                                 const ray &r) {
   vec3 oc{r.origin() - center};
   double a{dot(r.direction(), r.direction())};
-  double b{2 * dot(r.direction(), oc)};
+  double h = dot(r.direction(), oc);
   double c{dot(oc, oc) - radius * radius};
-  return b * b - 4 * a * c >= 0;
+  double disc = h * h - a * c;
+  if (disc < 0)
+    return std::nullopt;
+  else
+    return solve_quadratic(a, h, disc);
 }
 
 int main() {
@@ -55,13 +73,19 @@ int main() {
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {
 
-      point3 pixel_center = pixel00_loc + j * pixel_delta_u + i * pixel_delta_v;
-      vec3 ray_direction = pixel_center - camera_center;
+      point3 pixel_center{pixel00_loc + j * pixel_delta_u + i * pixel_delta_v};
+      vec3 ray_direction{pixel_center - camera_center};
 
       ray r(camera_center, ray_direction);
-      if (hit_sphere(point3(0, 0, -1), 0.5, r))
-        write_color(std::cout, color(1.0, 0, 0));
-      else
+
+      point3 sphere_center(0, 0, -1);
+      double sphere_radius = 0.5;
+
+      if (auto t = hit_sphere(sphere_center, sphere_radius, r)) {
+        vec3 normalize((r.at(t.value()) - sphere_center) / sphere_radius);
+        normalize = ((normalize + vec3(1, 1, 1)) / 2.0);
+        write_color(std::cout, normalize);
+      } else
         write_color(std::cout, ray_color(r));
       std::cout << "   ";
     }
