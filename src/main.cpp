@@ -3,7 +3,6 @@
 #include "vec3.h"
 #include <algorithm>
 #include <iostream>
-#include <optional>
 
 constexpr double aspect_ratio = 16.0 / 9.0;
 constexpr int image_width = 900;
@@ -26,29 +25,39 @@ color ray_color(const ray &r) {
   return result;
 }
 
-std::optional<double> solve_quadratic(double a, double h, double disc) {
-  double discroot = std::sqrt(disc);
-  double t1{(-h + discroot) / a};
-  double t2{(-h - discroot) / a};
-  if (t2 >= 0)
-    return t2;
-  if (t1 < 0)
-    return std::nullopt;
-  else
-    return t1;
-}
+struct record {
+  double t;
+  point3 point;
+  vec3 normal;
+};
 
-std::optional<double> hit_sphere(const point3 &center, double radius,
-                                 const ray &r) {
+bool hit_sphere(const point3 &center, double radius, const ray &r, record &rc) {
   vec3 oc{r.origin() - center};
   double a{dot(r.direction(), r.direction())};
-  double h = dot(r.direction(), oc);
+  double h{dot(r.direction(), oc)};
   double c{dot(oc, oc) - radius * radius};
-  double disc = h * h - a * c;
+  double disc{h * h - a * c};
+
   if (disc < 0)
-    return std::nullopt;
-  else
-    return solve_quadratic(a, h, disc);
+    return false;
+  else {
+    double discroot{std::sqrt(disc)};
+    double t1{(-h + discroot) / a};
+    double t2{(-h - discroot) / a};
+    double closert;
+
+    if (t2 >= 0)
+      closert = t2;
+    else if (t1 < 0)
+      return false;
+    else
+      closert = t1;
+
+    rc.t = closert;
+    rc.point = r.at(closert);
+    rc.normal = ((rc.point - center) / radius);
+    return true;
+  }
 }
 
 int main() {
@@ -69,6 +78,9 @@ int main() {
   const point3 pixel00_loc{viewport_upper_left +
                            0.5 * (pixel_delta_u + pixel_delta_v)};
 
+  const point3 sphere_center(0, 0, -1);
+  const double sphere_radius{0.5};
+
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {
@@ -78,13 +90,10 @@ int main() {
 
       ray r(camera_center, ray_direction);
 
-      point3 sphere_center(0, 0, -1);
-      double sphere_radius = 0.5;
+      record rc{};
 
-      if (auto t = hit_sphere(sphere_center, sphere_radius, r)) {
-        vec3 normalize((r.at(t.value()) - sphere_center) / sphere_radius);
-        normalize = ((normalize + vec3(1, 1, 1)) / 2.0);
-        write_color(std::cout, normalize);
+      if (hit_sphere(sphere_center, sphere_radius, r, rc)) {
+        write_color(std::cout, (rc.normal + vec3(1, 1, 1)) / 2);
       } else
         write_color(std::cout, ray_color(r));
       std::cout << "   ";
