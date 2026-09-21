@@ -1,9 +1,10 @@
 
 #include "main.h"
-#include "ray.h"
-#include "vec3.h"
+#include "hittable.h"
+#include "sphere.h"
 #include <iostream>
 #include <limits>
+#include <memory>
 
 std::ostream &write_color(std::ostream &out, const color &c) {
   out << static_cast<int>(c.x() * 255.999) << " "
@@ -23,7 +24,10 @@ color ray_color(const ray &r) {
 
 int main() {
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
-  sphere s(sphere_center, sphere_radius);
+  hittable_list list;
+  list.add(std::make_shared<sphere>(point3(0, 0, -1), 1.1));
+  list.add(std::make_shared<sphere>(point3(0.3, 0.3, -0.8), 0.2));
+  list.add(std::make_shared<sphere>(point3(-0.3, -0.3, -0.8), 0.2));
 
   const double t_min = 0;
   const double t_max = std::numeric_limits<double>::infinity();
@@ -37,7 +41,7 @@ int main() {
 
       ray r(camera_center, ray_direction);
 
-      if (s.check_hit(r, t_min, t_max, rc)) {
+      if (list.check_hit(r, t_min, t_max, rc)) {
         write_color(std::cout, (rc.normal + vec3(1, 1, 1)) / 2);
       } else
         write_color(std::cout, ray_color(r));
