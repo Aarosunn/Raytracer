@@ -1,13 +1,9 @@
 
+#include "main.h"
 #include "ray.h"
 #include "vec3.h"
-#include <algorithm>
 #include <iostream>
-
-constexpr double aspect_ratio = 16.0 / 9.0;
-constexpr int image_width = 900;
-constexpr int image_height =
-    std::max(1, static_cast<int>(image_width / aspect_ratio));
+#include <limits>
 
 std::ostream &write_color(std::ostream &out, const color &c) {
   out << static_cast<int>(c.x() * 255.999) << " "
@@ -25,63 +21,14 @@ color ray_color(const ray &r) {
   return result;
 }
 
-struct record {
-  double t;
-  point3 point;
-  vec3 normal;
-};
-
-bool hit_sphere(const point3 &center, double radius, const ray &r, record &rc) {
-  vec3 oc{r.origin() - center};
-  double a{dot(r.direction(), r.direction())};
-  double h{dot(r.direction(), oc)};
-  double c{dot(oc, oc) - radius * radius};
-  double disc{h * h - a * c};
-
-  if (disc < 0)
-    return false;
-  else {
-    double discroot{std::sqrt(disc)};
-    double t1{(-h + discroot) / a};
-    double t2{(-h - discroot) / a};
-    double closert;
-
-    if (t2 >= 0)
-      closert = t2;
-    else if (t1 < 0)
-      return false;
-    else
-      closert = t1;
-
-    rc.t = closert;
-    rc.point = r.at(closert);
-    rc.normal = ((rc.point - center) / radius);
-    return true;
-  }
-}
-
 int main() {
-  const point3 camera_center{0, 0, 0};
-  const double focal_length{1.0};
-  const double viewport_height{2.0};
-  const double viewport_width{
-      viewport_height * (static_cast<double>(image_width) / image_height)};
-
-  const vec3 viewport_u{viewport_width, 0, 0};
-  const vec3 viewport_v{0, -viewport_height, 0};
-
-  const vec3 pixel_delta_u{viewport_u / image_width};
-  const vec3 pixel_delta_v{viewport_v / image_height};
-
-  const vec3 viewport_upper_left{camera_center - vec3(0, 0, focal_length) -
-                                 viewport_u / 2 - viewport_v / 2};
-  const point3 pixel00_loc{viewport_upper_left +
-                           0.5 * (pixel_delta_u + pixel_delta_v)};
-
-  const point3 sphere_center(0, 0, -1);
-  const double sphere_radius{0.5};
-
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
+  sphere s(sphere_center, sphere_radius);
+
+  const double t_min = 0;
+  const double t_max = std::numeric_limits<double>::infinity();
+  record rc{};
+
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {
 
@@ -90,9 +37,7 @@ int main() {
 
       ray r(camera_center, ray_direction);
 
-      record rc{};
-
-      if (hit_sphere(sphere_center, sphere_radius, r, rc)) {
+      if (s.check_hit(r, t_min, t_max, rc)) {
         write_color(std::cout, (rc.normal + vec3(1, 1, 1)) / 2);
       } else
         write_color(std::cout, ray_color(r));
