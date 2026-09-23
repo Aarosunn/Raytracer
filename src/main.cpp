@@ -2,6 +2,8 @@
 #include "main.h"
 #include "hittable.h"
 #include "sphere.h"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -29,10 +31,12 @@ vec3 random_unit_vector() {
   return rv / rv.length();
 }
 
+int to_byte(double c) {
+  return static_cast<int>(std::sqrt(std::clamp(c, 0.0, 1.0)) * 255.999);
+}
+
 std::ostream &write_color(std::ostream &out, const color &c) {
-  out << static_cast<int>(c.x() * 255.999) << " "
-      << static_cast<int>(c.y() * 255.999) << " "
-      << static_cast<int>(c.z() * 255.999);
+  out << to_byte(c.x()) << " " << to_byte(c.y()) << " " << to_byte(c.z());
   return out;
 }
 
