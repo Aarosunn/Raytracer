@@ -4,7 +4,6 @@
 #include "ray.h"
 #include "vec3.h"
 #include <algorithm>
-#include <cmath>
 #include <ostream>
 
 constexpr double aspect_ratio = 931.0 / 556.0;
