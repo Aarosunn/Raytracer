@@ -1,35 +1,19 @@
 
 #include "main.h"
 #include "hittable.h"
+#include "material.h"
+#include "random.h"
 #include "sphere.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <random>
-
-static std::mt19937 gen(42);
-static std::uniform_real_distribution<double> dist(0.0, 1.0);
 
 constexpr double t_min = 0.001;
 constexpr double t_max = std::numeric_limits<double>::infinity();
 constexpr int N = 32;
 constexpr int depth_limit = 10;
-
-double random_double() { return dist(gen); }
-
-double random_double(double min, double max) {
-  return (random_double() * (max - min)) + min;
-}
-
-vec3 random_unit_vector() {
-  vec3 rv;
-  do {
-    rv = vec3(random_double(-1, 1), random_double(-1, 1), random_double(-1, 1));
-  } while (rv.length_squared() > 1 || rv.length_squared() < 1e-160);
-  return rv / rv.length();
-}
 
 int to_byte(double c) {
   return static_cast<int>(std::sqrt(std::clamp(c, 0.0, 1.0)) * 255.999);
@@ -46,9 +30,14 @@ color ray_color(const ray &r, const hittable &scene, int depth) {
 
   record rc{};
   if (scene.check_hit(r, t_min, t_max, rc)) {
-    ray bounce(rc.point, random_unit_vector() + rc.normal);
-    return 0.5 * ray_color(bounce, scene, ++depth);
+    ray scattered;
+    color attenuation;
+    if (rc.mat->scatter(r, rc, attenuation, scattered))
+      return attenuation * ray_color(scattered, scene, ++depth);
+    else
+      return color(0, 0, 0);
   }
+
   vec3 normalized = unit_vector(r.direction());
   double remap{(normalized.y() + 1) / 2};
   const color start{1.0, 1.0, 1.0};
@@ -59,9 +48,14 @@ color ray_color(const ray &r, const hittable &scene, int depth) {
 int main() {
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
   hittable_list list;
-  list.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5));
-  list.add(std::make_shared<sphere>(point3(0.3, 0.3, -0.8), 0.2));
-  list.add(std::make_shared<sphere>(point3(-0.3, -0.3, -0.8), 0.2));
+  list.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5,
+                                    std::make_shared<lambertian>()));
+  list.add(std::make_shared<sphere>(
+      point3(0.3, 0.3, -0.8), 0.2,
+      std::make_shared<lambertian>(color(0.7, 0.3, 0.3))));
+  list.add(std::make_shared<sphere>(
+      point3(-0.3, -0.3, -0.8), 0.2,
+      std::make_shared<lambertian>(color(0.2, 0.9, 0.1))));
 
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {

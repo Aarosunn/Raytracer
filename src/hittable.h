@@ -5,7 +5,10 @@
 #include <memory>
 #include <vector>
 
+class material;
+
 struct record {
+  std::shared_ptr<material> mat;
   point3 point;
   vec3 normal;
   double t;
@@ -42,7 +45,6 @@ public:
 
   bool check_hit(const ray &r, const double t_min, const double t_max,
                  record &rc) const override {
-
     bool hit_something = false;
     double running_t = t_max;
     for (const auto &l : list) {

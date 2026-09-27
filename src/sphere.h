@@ -2,16 +2,19 @@
 #pragma once
 
 #include "hittable.h"
+#include "material.h"
 #include "vec3.h"
 #include <cmath>
+#include <memory>
 
 class sphere : public hittable {
   point3 center_;
   double radius_;
+  std::shared_ptr<material> mat_;
 
 public:
-  sphere(const point3 &center, double radius)
-      : center_(center), radius_(radius) {}
+  sphere(const point3 &center, double radius, std::shared_ptr<material> mat)
+      : center_(center), radius_(radius), mat_(std::move(mat)) {}
 
   bool check_hit(const ray &r, const double t_min, const double t_max,
                  record &rc) const override {
@@ -37,6 +40,7 @@ public:
     rc.t = t_survive;
     rc.point = r.at(t_survive);
     rc.normal = ((rc.point - center_) / radius_);
+    rc.mat = std::move(mat_);
     rc.set_face_normal(r);
     return true;
   }
