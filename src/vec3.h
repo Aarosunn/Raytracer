@@ -73,5 +73,11 @@ inline std::ostream &operator<<(std::ostream &out, const vec3 &v) {
   return out;
 }
 
+inline vec3 reflect(const vec3 &v, const vec3 &n) {
+  vec3 along = dot(v, n) * n;
+  vec3 across = v - along;
+  return across - along;
+}
+
 using point3 = vec3;
 using color = vec3;

@@ -49,12 +49,12 @@ int main() {
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
   hittable_list list;
   list.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5,
-                                    std::make_shared<lambertian>()));
+                                    std::make_shared<metal>()));
   list.add(std::make_shared<sphere>(
-      point3(0.3, 0.3, -0.8), 0.2,
+      point3(0.25, 0.3, -0.5), 0.15,
       std::make_shared<lambertian>(color(0.7, 0.3, 0.3))));
   list.add(std::make_shared<sphere>(
-      point3(-0.3, -0.3, -0.8), 0.2,
+      point3(0, -0.3, 0.5), 0.3,
       std::make_shared<lambertian>(color(0.2, 0.9, 0.1))));
 
   for (int i = 0; i < image_height; ++i) {

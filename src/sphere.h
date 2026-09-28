@@ -40,7 +40,7 @@ public:
     rc.t = t_survive;
     rc.point = r.at(t_survive);
     rc.normal = ((rc.point - center_) / radius_);
-    rc.mat = std::move(mat_);
+    rc.mat = mat_;
     rc.set_face_normal(r);
     return true;
   }

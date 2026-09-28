@@ -27,3 +27,19 @@ public:
     return true;
   }
 };
+
+class metal : public material {
+  color albedo;
+
+public:
+  metal() : albedo(color(0.5, 0.5, 0.5)) {}
+
+  metal(const color &c) : albedo(c) {}
+
+  bool scatter(const ray &r, const record &rc, color &attenuation,
+               ray &scattered) const override {
+    scattered = ray(rc.point, reflect(r.direction(), rc.normal));
+    attenuation = albedo;
+    return true;
+  }
+};
