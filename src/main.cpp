@@ -56,6 +56,8 @@ int main() {
   list.add(std::make_shared<sphere>(
       point3(0, -0.3, 0.5), 0.3,
       std::make_shared<lambertian>(color(0.2, 0.9, 0.1))));
+  list.add(std::make_shared<sphere>(point3(0, -100.5, 0), 100,
+                                    std::make_shared<lambertian>()));
 
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {

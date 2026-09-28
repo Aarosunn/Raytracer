@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++23 -Wall -Wextra -g -O0 -MMD -MP
+CXXFLAGS := -std=c++23 -Wall -Wextra -g -O2 -MMD -MP
 
 rt: src/main.cpp 
 	$(CXX) $(CXXFLAGS) -o $@ $<
