@@ -1,6 +1,7 @@
 
 #pragma once
 #include <cmath>
+#include <iostream>
 #include <ostream>
 
 class vec3 {
@@ -77,6 +78,15 @@ inline vec3 reflect(const vec3 &v, const vec3 &n) {
   vec3 along = dot(v, n) * n;
   vec3 across = v - along;
   return across - along;
+}
+
+inline vec3 refract(const vec3 &v, const vec3 &n, double index_ratio) {
+  vec3 along_in = dot(v, n) * n;
+  vec3 across_out = (v - along_in) * index_ratio;
+  if (across_out.length_squared() > 1)
+    return reflect(v, n);
+  vec3 along_out = n * std::sqrt(1 - across_out.length_squared());
+  return across_out - along_out;
 }
 
 using point3 = vec3;

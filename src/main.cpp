@@ -58,6 +58,11 @@ int main() {
                                std::make_shared<metal>(color(0.2, 0.9, 0.1))));
   list.add(std::make_shared<sphere>(point3(0, -100.5, 0), 100,
                                     std::make_shared<metal>()));
+  list.add(std::make_shared<sphere>(point3(-0.1, -0.1, -0.4), 0.1,
+                                    std::make_shared<dielectric>(1.5)));
+  list.add(std::make_shared<sphere>(
+      point3(-6, 0.2, -7), 1,
+      std::make_shared<lambertian>(color(0.82, 0.71, 0.55))));
 
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {

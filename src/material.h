@@ -35,9 +35,9 @@ class metal : public material {
   double fuzz_;
 
 public:
-  metal() : albedo(color(0.5, 0.5, 0.5)), fuzz_(0.2) {}
+  metal() : albedo(color(0.5, 0.5, 0.5)), fuzz_(0.015) {}
 
-  metal(const color &c) : albedo(c), fuzz_(0.2) {}
+  metal(const color &c) : albedo(c), fuzz_(0.015) {}
 
   metal(const color &c, const double fuzz)
       : albedo(c), fuzz_(std::clamp(fuzz, 0.0, 1.0)) {}
@@ -51,5 +51,21 @@ public:
         (color(1, 1, 1) - albedo) *
             std::pow(1 + dot(unit_vector(r.direction()), rc.normal), 5);
     return (dot(scattered.direction(), rc.normal) > 0);
+  }
+};
+
+class dielectric : public material {
+  double refractive_;
+
+public:
+  dielectric(double refractive) : refractive_(refractive) {}
+
+  bool scatter(const ray &r, const record &rc, color &attenuation,
+               ray &scattered) const override {
+    scattered =
+        ray(rc.point, refract(unit_vector(r.direction()), rc.normal,
+                              rc.front_face ? 1.0 / refractive_ : refractive_));
+    attenuation = color(1, 1, 1);
+    return true;
   }
 };
