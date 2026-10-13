@@ -15,6 +15,8 @@ constexpr double t_max = std::numeric_limits<double>::infinity();
 constexpr int N = 32;
 constexpr int depth_limit = 10;
 
+static hittable_list list;
+
 int to_byte(double c) {
   return static_cast<int>(std::sqrt(std::clamp(c, 0.0, 1.0)) * 255.999);
 }
@@ -45,24 +47,35 @@ color ray_color(const ray &r, const hittable &scene, int depth) {
   return (1 - remap) * start + remap * end;
 }
 
+void add_sphere(const point3 &loc, double r, std::shared_ptr<material> mat) {
+  list.add(std::make_shared<sphere>(loc, r, std::move(mat)));
+}
+
+void setup_scene() {
+  color GOLD(1.0, 0.78, 0.34);
+  add_sphere(point3(0, 0, -1), 0.5, std::make_shared<metal>(GOLD));
+
+  color RED(0.7, 0.3, 0.3);
+  add_sphere(point3(0.25, 0.3, -0.5), 0.15, std::make_shared<metal>(RED));
+
+  color GREEN(0.2, 0.9, 0.1);
+  add_sphere(point3(0, -0.3, 0.5), 0.3, std::make_shared<metal>(GREEN, 0.1));
+
+  add_sphere(point3(0, -100.5, 0), 100, std::make_shared<metal>());
+
+  add_sphere(point3(-0.1, -0.1, -0.4), 0.1, std::make_shared<dielectric>(1.4));
+  add_sphere(point3(-0.1, -0.1, -0.4), -0.09,
+             std::make_shared<dielectric>(1.4));
+
+  color TAN(0.82, 0.71, 0.55);
+  add_sphere(point3(-6, 0.2, -7), 1, std::make_shared<lambertian>(TAN));
+}
+
 int main() {
+
+  setup_scene();
+
   std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
-  hittable_list list;
-  list.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5,
-                                    std::make_shared<metal>()));
-  list.add(
-      std::make_shared<sphere>(point3(0.25, 0.3, -0.5), 0.15,
-                               std::make_shared<metal>(color(0.7, 0.3, 0.3))));
-  list.add(
-      std::make_shared<sphere>(point3(0, -0.3, 0.5), 0.3,
-                               std::make_shared<metal>(color(0.2, 0.9, 0.1))));
-  list.add(std::make_shared<sphere>(point3(0, -100.5, 0), 100,
-                                    std::make_shared<metal>()));
-  list.add(std::make_shared<sphere>(point3(-0.1, -0.1, -0.4), 0.1,
-                                    std::make_shared<dielectric>(1.5)));
-  list.add(std::make_shared<sphere>(
-      point3(-6, 0.2, -7), 1,
-      std::make_shared<lambertian>(color(0.82, 0.71, 0.55))));
 
   for (int i = 0; i < image_height; ++i) {
     for (int j = 0; j < image_width; ++j) {
