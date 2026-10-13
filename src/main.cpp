@@ -1,51 +1,12 @@
 
-#include "main.h"
+#include "camera.h"
 #include "hittable.h"
 #include "material.h"
-#include "random.h"
 #include "sphere.h"
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <limits>
+#include "vec3.h"
 #include <memory>
 
-constexpr double t_min = 0.001;
-constexpr double t_max = std::numeric_limits<double>::infinity();
-constexpr int N = 32;
-constexpr int depth_limit = 10;
-
 static hittable_list list;
-
-int to_byte(double c) {
-  return static_cast<int>(std::sqrt(std::clamp(c, 0.0, 1.0)) * 255.999);
-}
-
-std::ostream &write_color(std::ostream &out, const color &c) {
-  out << to_byte(c.x()) << " " << to_byte(c.y()) << " " << to_byte(c.z());
-  return out;
-}
-
-color ray_color(const ray &r, const hittable &scene, int depth) {
-  if (depth > depth_limit)
-    return color(0, 0, 0);
-
-  record rc{};
-  if (scene.check_hit(r, t_min, t_max, rc)) {
-    ray scattered;
-    color attenuation;
-    if (rc.mat->scatter(r, rc, attenuation, scattered))
-      return attenuation * ray_color(scattered, scene, ++depth);
-    else
-      return color(0, 0, 0);
-  }
-
-  vec3 normalized = unit_vector(r.direction());
-  double remap{(normalized.y() + 1) / 2};
-  const color start{1.0, 1.0, 1.0};
-  const color end{0.5, 0.7, 1.0};
-  return (1 - remap) * start + remap * end;
-}
 
 void add_sphere(const point3 &loc, double r, std::shared_ptr<material> mat) {
   list.add(std::make_shared<sphere>(loc, r, std::move(mat)));
@@ -72,30 +33,18 @@ void setup_scene() {
 }
 
 int main() {
-
   setup_scene();
 
-  std::cout << "P3\n" << image_width << " " << image_height << '\n' << "255\n";
+  camera cam;
+  cam.aspect_ratio = 931.0 / 556.0;
+  cam.image_width = 931;
+  cam.samples_per_pixel = 512;
+  cam.max_depth = 10;
 
-  for (int i = 0; i < image_height; ++i) {
-    for (int j = 0; j < image_width; ++j) {
+  cam.vfov = 90;
+  cam.lookfrom = point3(0, 0, 0);
+  cam.lookat = point3(0, 0, -1);
+  cam.vup = vec3(0, 1, 0);
 
-      point3 pixel_center{pixel00_loc + j * pixel_delta_u + i * pixel_delta_v};
-      color color_acc{};
-      for (int n = 0; n < N; ++n) {
-        point3 jitter_pixel{pixel_center +
-                            (random_double() - 0.5) * pixel_delta_u +
-                            (random_double() - 0.5) * pixel_delta_v};
-        vec3 ray_direction{jitter_pixel - camera_center};
-        ray r(camera_center, ray_direction);
-        color_acc += ray_color(r, list, 0);
-      }
-
-      color color_avg = color_acc / N;
-      write_color(std::cout, color_avg);
-      std::cout << "   ";
-    }
-    std::cerr << image_height - i << " rows left\n";
-    std::cout << '\n';
-  }
+  cam.render(list);
 }
