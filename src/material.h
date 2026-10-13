@@ -50,6 +50,7 @@ public:
         albedo +
         (color(1, 1, 1) - albedo) *
             std::pow(1 + dot(unit_vector(r.direction()), rc.normal), 5);
+
     return (dot(scattered.direction(), rc.normal) > 0);
   }
 };
@@ -62,9 +63,20 @@ public:
 
   bool scatter(const ray &r, const record &rc, color &attenuation,
                ray &scattered) const override {
-    scattered =
-        ray(rc.point, refract(unit_vector(r.direction()), rc.normal,
-                              rc.front_face ? 1.0 / refractive_ : refractive_));
+    double schlick = std::pow((1 - refractive_) / (1 + refractive_), 2);
+    double reflectance =
+        schlick +
+        (1 - schlick) *
+            std::pow(1 + dot(unit_vector(r.direction()), rc.normal), 5);
+    vec3 direction_in;
+
+    if (random_double(0, 1) < reflectance)
+      direction_in = unit_vector(reflect(r.direction(), rc.normal));
+    else
+      direction_in = refract(unit_vector(r.direction()), rc.normal,
+                             rc.front_face ? 1.0 / refractive_ : refractive_);
+
+    scattered = ray(rc.point, direction_in);
     attenuation = color(1, 1, 1);
     return true;
   }

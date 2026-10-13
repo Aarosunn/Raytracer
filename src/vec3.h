@@ -83,9 +83,11 @@ inline vec3 reflect(const vec3 &v, const vec3 &n) {
 inline vec3 refract(const vec3 &v, const vec3 &n, double index_ratio) {
   vec3 along_in = dot(v, n) * n;
   vec3 across_out = (v - along_in) * index_ratio;
-  if (across_out.length_squared() > 1)
+
+  double acrossSquared = across_out.length_squared();
+  if (acrossSquared > 1)
     return reflect(v, n);
-  vec3 along_out = n * std::sqrt(1 - across_out.length_squared());
+  vec3 along_out = n * std::sqrt(1 - acrossSquared);
   return across_out - along_out;
 }
 
